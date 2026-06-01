@@ -5,18 +5,40 @@ import { deleteCalendarEvent } from '@/lib/google-calendar';
 
 export async function POST(request) {
   try {
-    const { bookingId, userId } = await request.json();
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.split(' ')[1];
 
-    if (!bookingId || !userId) {
+    if (!token) {
       return NextResponse.json(
-        { error: 'Faltan parámetros requeridos: bookingId y userId.' },
+        { error: 'No autorizado: Falta el token de acceso.' },
+        { status: 401 }
+      );
+    }
+
+    const { bookingId } = await request.json();
+
+    if (!bookingId) {
+      return NextResponse.json(
+        { error: 'Falta el parámetro requerido: bookingId.' },
         { status: 400 }
       );
     }
 
     const supabaseServer = getSupabaseServer();
 
-    // 1. Obtener la reserva y verificar que pertenece al usuario
+    // 1. Validar el token JWT de forma segura en el servidor
+    const { data: { user }, error: authError } = await supabaseServer.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Sesión no válida o expirada. Por favor inicia sesión de nuevo.' },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
+
+    // 2. Obtener la reserva y verificar que pertenece al usuario autenticado
     const { data: booking, error: fetchError } = await supabaseServer
       .from('bookings')
       .select('*')
@@ -26,7 +48,7 @@ export async function POST(request) {
 
     if (fetchError || !booking) {
       return NextResponse.json(
-        { error: 'Reserva no encontrada o no tienes autorización.' },
+        { error: 'Reserva no encontrada o no tienes autorización para gestionarla.' },
         { status: 404 }
       );
     }
@@ -36,7 +58,7 @@ export async function POST(request) {
       return NextResponse.json({ success: true, message: 'La reserva ya estaba cancelada.' });
     }
 
-    // 2. Actualizar estado local a 'cancelled'
+    // 3. Actualizar estado local a 'cancelled'
     const { error: updateError } = await supabaseServer
       .from('bookings')
       .update({ status: 'cancelled' })
@@ -47,7 +69,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Error al cancelar la reserva en base de datos.' }, { status: 500 });
     }
 
-    // 3. Si tiene google_event_id, eliminar el evento en Google Calendar
+    // 4. Si tiene google_event_id, eliminar el evento en Google Calendar
     if (booking.google_event_id) {
       try {
         // Cargar tokens de Google del perfil del usuario

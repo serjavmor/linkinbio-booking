@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Manejar Login o Registro
+  // Manejar Login o Registro con medidas de seguridad reforzadas
   const handleAuth = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -45,28 +45,59 @@ export default function DashboardLayout({ children }) {
 
     try {
       if (isSignUp) {
-        // Registro
+        // 1. Validaciones de Registro
         if (!username) {
           setAuthError('El nombre de usuario es obligatorio.');
           setAuthLoading(false);
           return;
         }
 
+        // Sanitización estricta del username (alfanumérico, puntos y guiones, sin espacios)
+        const usernameRegex = /^[a-z0-9._-]+$/;
+        const cleanUsername = username.toLowerCase().trim();
+        if (!usernameRegex.test(cleanUsername)) {
+          setAuthError('El nombre de usuario solo puede contener letras minúsculas, números, puntos, guiones y guiones bajos (sin espacios ni acentos).');
+          setAuthLoading(false);
+          return;
+        }
+
+        // Contraseñas Fuertes: mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-\/\\#+,:;=<>])[A-Za-z\d@$!%*?&._\-\/\\#+,:;=<>]{8,}$/;
+        if (!passwordRegex.test(password)) {
+          setAuthError('La contraseña debe tener al menos 8 caracteres, incluir al menos una mayúscula, una minúscula, un número y un carácter especial.');
+          setAuthLoading(false);
+          return;
+        }
+
+        // 2. Verificación preventiva de duplicados en Supabase
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', cleanUsername)
+          .maybeSingle();
+
+        if (existingUser) {
+          setAuthError('El nombre de usuario ya está en uso. Por favor, elige otro.');
+          setAuthLoading(false);
+          return;
+        }
+
+        // 3. Crear usuario
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              username: username.toLowerCase().trim(),
-              display_name: displayName || username,
+              username: cleanUsername,
+              display_name: displayName.trim() || cleanUsername,
             }
           }
         });
 
         if (error) throw error;
-        setAuthError('Registro exitoso. Revisa tu correo para verificar tu cuenta (o inicia sesión si la confirmación por correo está desactivada en Supabase).');
+        setAuthError('Registro exitoso. Revisa tu correo para verificar tu cuenta.');
       } else {
-        // Login
+        // Login estándar seguro
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
@@ -182,6 +213,7 @@ export default function DashboardLayout({ children }) {
   // Dashboard Navegación
   const navItems = [
     { name: 'Resumen', path: '/dashboard', icon: '📊' },
+    { name: 'Perfil', path: '/dashboard/profile', icon: '👤' },
     { name: 'Enlaces', path: '/dashboard/links', icon: '🔗' },
     { name: 'Disponibilidad', path: '/dashboard/schedule', icon: '📅' },
     { name: 'Reservas', path: '/dashboard/bookings', icon: '📝' },

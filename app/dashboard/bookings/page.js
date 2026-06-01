@@ -36,16 +36,29 @@ export default function BookingsPage() {
     }
   }
 
-  // Cancelar Reserva
+  // Cancelar Reserva de forma segura enviando JWT
   const handleCancelBooking = async (bookingId) => {
     if (!confirm('¿Estás seguro de que deseas cancelar esta reserva? Se enviará una notificación de cancelación al cliente.')) return;
     setCancellingId(bookingId);
 
     try {
+      // Obtener el token de acceso de la sesión activa
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert('Sesión no válida o expirada. Por favor inicia sesión de nuevo.');
+        setCancellingId(null);
+        return;
+      }
+
       const res = await fetch('/api/bookings/cancel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId, userId })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ bookingId })
       });
 
       const data = await res.json();

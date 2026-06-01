@@ -11,6 +11,8 @@ create table public.profiles (
     display_name text,
     avatar_url text,
     bio text,
+    services text,                     -- Descripción de servicios profesionales
+    social_links jsonb,                -- Objeto JSON con enlaces a redes sociales
     google_access_token text,
     google_refresh_token text,
     google_token_expiry bigint, -- timestamp en milisegundos
@@ -123,3 +125,10 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- ====================================================================
+-- MIGRACIONES DE ACTUALIZACIÓN (Ejecutar en Supabase si ya creaste la BD)
+-- ====================================================================
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS services text;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS social_links jsonb;
+
