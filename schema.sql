@@ -88,7 +88,7 @@ create table public.bookings (
     start_time timestamp with time zone not null,
     end_time timestamp with time zone not null,
     google_event_id text,
-    status text default 'confirmed'::text not null check (status in ('confirmed', 'cancelled')),
+    status text default 'pending'::text not null check (status in ('pending', 'confirmed', 'cancelled')),
     notes text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     constraint booking_time_range_check check (start_time < end_time)
@@ -131,4 +131,7 @@ create or replace trigger on_auth_user_created
 -- ====================================================================
 -- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS services text;
 -- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS social_links jsonb;
+-- ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+-- ALTER TABLE public.bookings ADD CONSTRAINT bookings_status_check CHECK (status in ('pending', 'confirmed', 'cancelled'));
+-- ALTER TABLE public.bookings ALTER COLUMN status SET DEFAULT 'pending';
 
