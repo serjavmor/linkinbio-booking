@@ -6,7 +6,8 @@
 - Se implementó un panel de control avanzado para gestionar las reservas.
 - La base de datos y la creación de reservas están diseñadas para entrar en estado "Pendiente" y requerir aprobación manual.
 - Las API Routes de Aprobación y Cancelación están blindadas en el servidor utilizando firmas JWT de Supabase.
-- El proyecto se encuentra sincronizado y subido al repositorio público de GitHub: https://github.com/serjavmor/linkinbio-booking
+- El proyecto se ha subido a GitHub en el repositorio público: https://github.com/serjavmor/linkinbio-booking
+- Se crearon y publicaron las ramas de desarrollo solicitadas: `cara-al-usuario`, `panel-usuario` y `panel-maestro`.
 
 ## Cambios Realizados
 - **Base de Datos**: Se actualizó `schema.sql` para soportar estados `pending`, `confirmed` y `cancelled` en las reservas.
