@@ -4,6 +4,7 @@
 - Se ha finalizado la construcción completa del proyecto de "Link in Bio" con reservas integradas y sincronización de Google Calendar.
 - La aplicación compila exitosamente (`npm run build` verificado).
 - Se han generado todas las vistas públicas, el panel de administración privado y las rutas de API de backend de manera robusta y escalable con Next.js y Supabase (PostgreSQL).
+- El proyecto se ha subido a GitHub en el repositorio privado: https://github.com/serjavmor/linkinbio-booking
 
 ## Cambios Realizados
 - **Fase 1**: Inicialización del proyecto Next.js y variables de entorno en `.env.local.example`.
